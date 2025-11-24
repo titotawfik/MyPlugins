@@ -28,7 +28,6 @@
     border: 1px solid var(--qc-border-color);
     border-radius: 4px;
     box-sizing: border-box;
-    
   }
 
   .qc_submit-btn {
@@ -47,15 +46,26 @@
     }
   }
 
+  .qc_error-message,
   .qc-error {
     color: red;
-    border: 1px solid red;
     font-weight: bold;
   }
-  .qc-success {
+  .qc_error-message,
+  .qc_success-message {
+    padding: 10px;
+    display: block;
+  }
+  .qc-success,
+  .qc_success-message {
     color: green;
-    border: 1px solid green;
     font-weight: bold;
+  }
+  .qc-error {
+    border: 1px solid red;
+  }
+  .qc-success {
+    border: 1px solid green;
   }
 }
 

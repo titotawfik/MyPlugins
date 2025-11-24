@@ -4,7 +4,7 @@
  * @package   WP_QuickCheck
  * @author    Tito Bakr
  * Plugin Name:     wp-quickcheck
- * Description:     quickcheck plugin test
+ * Description:     Quickcheck Plugin Test
  * Version:         0.1.0  
  * Author:          Tito Bakr
  * Text Domain:     wp-quickcheck
@@ -48,7 +48,8 @@ add_action('wp_enqueue_scripts', function () {
     //Localise the script
     wp_localize_script('wpqc-frontend', 'wpqc_ajax', array(
         'ajax_url' => admin_url('admin-ajax.php'),
-        'nonce'    => wp_create_nonce('wpqc_nonce')
+        'nonce'    => wp_create_nonce('wpqc_nonce'),
+        'is_logged_in' => is_user_logged_in()
     ));
 });
 
@@ -57,16 +58,22 @@ add_action('wp_enqueue_scripts', function () {
  */
 function wpqc_form_shortcode()
 {
+
     ob_start();
 ?>
-    <form id="qc" class="qc-form">
-        <label class="qc_input-label" for="qc_input">Enter something:</label>
-        <input type="text" id="qc_input" name="qc_input" class="qc_text-input" required>
-        <button type="submit" id="qc_submit" class="qc_submit-btn" disabled>Submit</button>
-        <output id="char_count" class="qc_text-output"></output>
-    </form>
+<form id="qc-form" class="qc-form">
+    <label class="qc_input-label" for="qc_input">Enter something:</label>
+    <input type="text" id="qc_input" name="qc_input" class="qc_text-input" required>
+    <button type="submit" id="qc_submit" class="qc_submit-btn" aria-disabled="true" disabled>Submit</button>
+    <output id="char_count" class="qc_text-output" aria-live="polite" aria-atomic="true"></output>
+</form>
+<?php if (is_user_logged_in() && current_user_can('edit_posts')) : ?>
+<ul id="entries_list" class="qc-list"></ul>
+<?php else : ?>
+<p>You must be logged in to view the last five
+    entries.</p>
+<?php endif; ?>
 
-    <ul id="entries_list" class="qc-list"></ul>
 <?php
     return ob_get_clean();
 }
@@ -127,14 +134,10 @@ function wpqc_store_input_ajax()
 {
     check_ajax_referer('wpqc_nonce', 'nonce');
 
-    if (!is_user_logged_in() || !current_user_can('edit_posts')) {
-        wp_send_json_error('Unauthorized', 403);
-    }
-
     $input = isset($_POST['input']) ? sanitize_text_field($_POST['input']) : '';
     if (empty($input)) {
         wp_send_json_error(array(
-            'message' => 'You Entered: Unsave entery or empty input.',
+            'message' => 'You Entered: Unsafe entery or empty input, please try again.',
             'field'   => 'qc_input'
         ));
     }
@@ -144,9 +147,10 @@ function wpqc_store_input_ajax()
     wp_send_json_success('Saved');
 }
 add_action('wp_ajax_wpqc_store_input', 'wpqc_store_input_ajax');
+add_action('wp_ajax_nopriv_wpqc_store_input', 'wpqc_store_input_ajax');
 
 /**
- *  Add an AJAX endpoint that returns the last five saved entries as JSON 
+ * Add an AJAX endpoint that returns the last five saved entries as JSON 
  * Accessible for logged-in users only.
  * Proper capability checks should be in place.
  */
@@ -157,7 +161,22 @@ function wpqc_get_last_five_entries()
     if (!is_user_logged_in() || !current_user_can('edit_posts')) {
         wp_send_json_error('Unauthorized', 403);
     }
+    // Delegate the query to a helper so it can be reused and inspected.
+    $results = wpqc_get_last_five_entries_array();
 
+    wp_send_json_success($results);
+}
+add_action('wp_ajax_wpqc_get_last_five_entries', 'wpqc_get_last_five_entries');
+
+/**
+ * Helper function to get the last five entries from the database.
+ * Return the last five entries as an array (no output).
+ * Useful for reuse and for debugging (var_dump).
+ *
+ * @return array
+ */
+function wpqc_get_last_five_entries_array()
+{
     global $wpdb;
     $table = $wpdb->prefix . 'wpqc_inputs';
 
@@ -175,6 +194,5 @@ function wpqc_get_last_five_entries()
         $row['id'] = (int) $row['id'];
     }
 
-    wp_send_json($results);
+    return $results;
 }
-add_action('wp_ajax_wpqc_get_last_five_entries', 'wpqc_get_last_five_entries');
