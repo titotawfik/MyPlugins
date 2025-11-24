@@ -27,52 +27,31 @@ define('WPQC_WP_VERSION', '6.8.3');
 define('WPQC_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('WPQC_PLUGIN_URL', plugin_dir_url(__FILE__));
 
-// Enqueue plugin styles
-function wpqc_enqueue_styles()
-{
-    wp_enqueue_style('wpqc-style', WPQC_PLUGIN_URL . 'css/wpqc-style.css', array(), WPQC_VERSION);
+//Load plugin assests
+if (!function_exists('wpqc_enqueue_assets')) {
+    require_once WPQC_PLUGIN_ROOT . 'includes/wpqc-assets.php';
 }
 
-// Enqueue frontend scripts and styles
-add_action('wp_enqueue_scripts', function () {
-    // Add stylesheet 
-    wpqc_enqueue_styles();
-    // Enqueue the script
-    wp_enqueue_script(
-        'wpqc-frontend',
-        WPQC_PLUGIN_URL . 'js/wpqc-script.js',
-        array('jquery'),
-        WPQC_VERSION,
-        true
-    );
-    //Localise the script
-    wp_localize_script('wpqc-frontend', 'wpqc_ajax', array(
-        'ajax_url' => admin_url('admin-ajax.php'),
-        'nonce'    => wp_create_nonce('wpqc_nonce'),
-        'is_logged_in' => is_user_logged_in()
-    ));
-});
-
 /** 
- * Create a shortcode [qc_form]
+ * Create a shortcode [qc_form] that outputs a form with:
  */
 function wpqc_form_shortcode()
 {
 
     ob_start();
 ?>
-<form id="qc-form" class="qc-form">
-    <label class="qc_input-label" for="qc_input">Enter something:</label>
-    <input type="text" id="qc_input" name="qc_input" class="qc_text-input" required>
-    <button type="submit" id="qc_submit" class="qc_submit-btn" aria-disabled="true" disabled>Submit</button>
-    <output id="char_count" class="qc_text-output" aria-live="polite" aria-atomic="true"></output>
-</form>
-<?php if (is_user_logged_in() && current_user_can('edit_posts')) : ?>
-<ul id="entries_list" class="qc-list"></ul>
-<?php else : ?>
-<p>You must be logged in to view the last five
-    entries.</p>
-<?php endif; ?>
+    <form id="qc-form" class="qc-form">
+        <label class="qc_input-label" for="qc_input">Enter something:</label>
+        <input type="text" id="qc_input" name="qc_input" class="qc_text-input" required>
+        <button type="submit" id="qc_submit" class="qc_submit-btn" aria-disabled="true" disabled>Submit</button>
+        <output id="char_count" class="qc_text-output" aria-live="polite" aria-atomic="true"></output>
+    </form>
+    <?php if (is_user_logged_in() && current_user_can('edit_posts')) : ?>
+        <ul id="entries_list" class="qc-list"></ul>
+    <?php else : ?>
+        <p>You must be logged in to view the last five
+            entries.</p>
+    <?php endif; ?>
 
 <?php
     return ob_get_clean();
