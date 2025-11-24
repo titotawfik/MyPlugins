@@ -5,6 +5,8 @@
   --qc-background-color: #f9f9f9;
   --qc-text-color: #333;
   --qc-white-color: #fff;
+  --qc-error-color: #ff0000;
+  --qc-success-color: #28a745;
 }
 
 .qc-form {
@@ -48,7 +50,7 @@
 
   .qc_error-message,
   .qc-error {
-    color: red;
+    color: var(--qc-error-color);
     font-weight: bold;
   }
   .qc_error-message,
@@ -58,14 +60,14 @@
   }
   .qc-success,
   .qc_success-message {
-    color: green;
+    color: var(--qc-success-color);
     font-weight: bold;
   }
   .qc-error {
-    border: 1px solid red;
+    border: 1px solid var(--qc-error-color);
   }
   .qc-success {
-    border: 1px solid green;
+    border: 1px solid var(--qc-success-color);
   }
 }
 

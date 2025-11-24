@@ -1,6 +1,11 @@
-//1- Disable the submit button until the text input has at least 3 characters using jQuery
-//2- Show a small counter of how many characters the user typed using jQuery.
-//3- Add an AJAX endpoint that returns the last five saved entries as JSON.
+/*
+1- Disable the submit button until the text input has at least 3 characters using jQuery
+2- Show a small counter of how many characters the user typed using jQuery.
+3- Add an AJAX endpoint that returns the last five saved entries as JSON.
+## Extra functionality if time allows:
+4- On page load, if the user is logged in, fetch and display the last five entries using jQuery AJAX.
+5- Add some UX improvements and prograssive enhancement (Loader indication, success indication, error handling, etc).
+*/
 
 jQuery(document).ready(function ($) {
   const $form = $("#qc-form");
@@ -13,12 +18,14 @@ jQuery(document).ready(function ($) {
 
   // Load entries on page load for logged users only
   if (typeof wpqc_ajax !== "undefined" && wpqc_ajax.is_logged_in) {
+    //Add loader indication
+    $list.html("<li>Loading entries...</li>");
     loadEntries();
   }
+
   // Listen for input changes in the text field
   $textInput.on("input", function () {
     const charCount = $(this).val().length;
-
     if (charCount >= minChars) {
       // Enable the submit button if input has at least minChars characters
       $submitButton.prop("disabled", false).attr("aria-disabled", "false");
@@ -28,7 +35,6 @@ jQuery(document).ready(function ($) {
       $submitButton.prop("disabled", true).attr("aria-disabled", "true");
       $textInput.removeClass("qc-success");
     }
-
     // Show a small counter of how many characters the user typed
     $charCount.text(charCount + " characters");
   });
