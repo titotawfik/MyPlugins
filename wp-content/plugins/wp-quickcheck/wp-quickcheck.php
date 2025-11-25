@@ -4,10 +4,12 @@
  * @package   WP_QuickCheck
  * @author    Tito Bakr
  * Plugin Name:     wp-quickcheck
+ * Plugin Slug:     wp-quickcheck
+ * Text Domain:     wp-quickcheck
  * Description:     Quickcheck Plugin Test
  * Version:         0.1.0  
  * Author:          Tito Bakr
- * Text Domain:     wp-quickcheck
+ * License:         GPL v3 or later
  * License URI:     http://www.gnu.org/licenses/gpl-3.0.txt
  * Requires PHP:    7.4
  */
@@ -18,8 +20,9 @@ if (!defined('ABSPATH')) {
 }
 
 define('WPQC_VERSION', '0.1.0');
-define('WPQC_TEXTDOMAIN', 'wp-quickcheck');
-define('WPQC_NAME', 'wp-quickcheck');
+define('WPQC_PLUGIN_NAME', 'wp-quickcheck');
+define('WPQC_PLUGIN_SLUG', WPQC_PLUGIN_NAME);
+define('WPQC_TEXTDOMAIN', WPQC_PLUGIN_NAME);
 define('WPQC_PLUGIN_ROOT', plugin_dir_path(__FILE__));
 define('WPQC_PLUGIN_ABSOLUTE', __FILE__);
 define('WPQC_MIN_PHP_VERSION', '7.4');
@@ -27,36 +30,46 @@ define('WPQC_WP_VERSION', '6.8.3');
 define('WPQC_PLUGIN_BASENAME', plugin_basename(__FILE__));
 define('WPQC_PLUGIN_URL', plugin_dir_url(__FILE__));
 
-//Load plugin assests
-if (!function_exists('wpqc_enqueue_assets')) {
-    require_once WPQC_PLUGIN_ROOT . 'includes/wpqc-assets.php';
-}
+// Load Text Domain for Translations if needed
+add_action('plugins_loaded', function () {
+    load_plugin_textdomain(WPQC_TEXTDOMAIN, false, dirname(WPQC_PLUGIN_BASENAME) . '/languages');
+});
 
 /** 
  * Create a shortcode [qc_form] that outputs a form with:
  */
 function wpqc_form_shortcode()
 {
-
-    ob_start();
-?>
-    <form id="qc-form" class="qc-form">
-        <label class="qc_input-label" for="qc_input">Enter something:</label>
-        <input type="text" id="qc_input" name="qc_input" class="qc_text-input" required>
-        <button type="submit" id="qc_submit" class="qc_submit-btn" aria-disabled="true" disabled>Submit</button>
-        <output id="char_count" class="qc_text-output" aria-live="polite" aria-atomic="true"></output>
-    </form>
-    <?php if (is_user_logged_in() && current_user_can('edit_posts')) : ?>
-        <ul id="entries_list" class="qc-list"></ul>
-    <?php else : ?>
-        <p>You must be logged in to view the last five
-            entries.</p>
-    <?php endif; ?>
-
-<?php
-    return ob_get_clean();
+    //Load plugin assests only if shorcode is used
+    require_once WPQC_PLUGIN_ROOT . 'includes/wpqc-assets.php';
+    //Load the shortcode template
+    require_once WPQC_PLUGIN_ROOT . 'templates/shortcode.php';
+    return wpqc_shortcode_template();
 }
 add_shortcode('qc_form', 'wpqc_form_shortcode');
+
+/**
+ *  Create custom table on plugin activation
+ * {prefix}_wpqc_inputs with fields: id (INT, auto-increment, primary key) input_text (VARCHAR 255) submitted_at (datetime)
+ */
+function wpqc_create_table()
+{
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'wpqc_inputs';
+    $charset_collate = $wpdb->get_charset_collate();
+
+    $sql = "CREATE TABLE $table_name (
+        id int(9) NOT NULL AUTO_INCREMENT,
+        input_text varchar(255) NOT NULL,
+        submitted_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY  (id)
+    ) $charset_collate;";
+
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    dbDelta($sql);
+}
+register_activation_hook(__FILE__, 'wpqc_create_table');
 
 /** 
  *  Store the submitted text into a custom table (details below) using a secure SQL statement. 
@@ -81,29 +94,6 @@ function wpqc_store_input(string $input)
 }
 
 /**
- *  Create custom table on plugin activation
- * create a table {prefix}_wpqc_inputs with fields: id (INT, auto-increment, primary key) input_text (VARCHAR 255) submitted_at (datetime)
- */
-function wpqc_create_table()
-{
-
-    global $wpdb;
-    $table_name = $wpdb->prefix . 'wpqc_inputs';
-    $charset_collate = $wpdb->get_charset_collate();
-
-    $sql = "CREATE TABLE $table_name (
-        id mediumint(9) NOT NULL AUTO_INCREMENT,
-        input_text varchar(255) NOT NULL,
-        submitted_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY  (id)
-    ) $charset_collate;";
-
-    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-    dbDelta($sql);
-}
-register_activation_hook(__FILE__, 'wpqc_create_table');
-
-/**
  * Register the AJAX endpoint for saving entries
  * Proper capability checks should be in place.
  * Accessible for logged-in users only.
@@ -112,7 +102,6 @@ register_activation_hook(__FILE__, 'wpqc_create_table');
 function wpqc_store_input_ajax()
 {
     check_ajax_referer('wpqc_nonce', 'nonce');
-
     $input = isset($_POST['input']) ? sanitize_text_field($_POST['input']) : '';
     if (empty($input)) {
         wp_send_json_error(array(
@@ -157,11 +146,11 @@ add_action('wp_ajax_wpqc_get_last_five_entries', 'wpqc_get_last_five_entries');
 function wpqc_get_last_five_entries_array()
 {
     global $wpdb;
-    $table = $wpdb->prefix . 'wpqc_inputs';
+    $qctable = $wpdb->prefix . 'wpqc_inputs';
 
     $query = $wpdb->prepare(
         "SELECT id, input_text, submitted_at
-         FROM {$table}
+         FROM {$qctable}
          ORDER BY submitted_at DESC, id DESC
          LIMIT %d",
         5
@@ -169,9 +158,8 @@ function wpqc_get_last_five_entries_array()
 
     $results = $wpdb->get_results($query, ARRAY_A);
 
-    foreach ($results as &$row) {
+    return array_map(function ($row) {
         $row['id'] = (int) $row['id'];
-    }
-
-    return $results;
+        return $row;
+    }, $results);
 }
