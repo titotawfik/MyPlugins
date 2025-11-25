@@ -95,8 +95,7 @@ function wpqc_store_input(string $input)
 
 /**
  * Register the AJAX endpoint for saving entries
- * Proper capability checks should be in place.
- * Accessible for logged-in users only.
+ * Accessible for both logged-in and non-logged-in users to submit data via the form.
  * sanitization and validation of input data.
  */
 function wpqc_store_input_ajax()
