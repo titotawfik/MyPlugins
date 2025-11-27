@@ -4,7 +4,7 @@
 3- Add an AJAX endpoint that returns the last five saved entries as JSON.
 ## Extra functionality if time allows:
 4- On page load, if the user is logged in, fetch and display the last five entries using jQuery AJAX.
-5- Add some UX improvements and prograssive enhancement (Loader indication, success indication, error handling, etc).
+5- Add some UX improvements and progressive enhancement (Loader indication, success indication, error handling, etc).
 */
 
 jQuery(document).ready(function ($) {
@@ -110,7 +110,7 @@ jQuery(document).ready(function ($) {
   function loadEntries() {
     $.ajax({
       url: wpqc_ajax.ajax_url,
-      method: "POST",
+      method: "GET",
       data: {
         action: "wpqc_get_last_five_entries",
         nonce: wpqc_ajax.nonce,

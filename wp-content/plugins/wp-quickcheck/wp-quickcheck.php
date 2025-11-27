@@ -37,6 +37,8 @@ add_action('plugins_loaded', function () {
 
 /** 
  * Create a shortcode [qc_form] that outputs a form with:
+ * Techical question: What happen you adding the shorcode 10 times on the same page? Highlight any potential issues and suggest improvements.
+ * What Require once can do here to optimize performance? 
  */
 function wpqc_form_shortcode()
 {
@@ -74,6 +76,8 @@ register_activation_hook(__FILE__, 'wpqc_create_table');
 /** 
  *  Store the submitted text into a custom table (details below) using a secure SQL statement. 
  * @param string $input The input text to store
+ * Technical question: What security considerations should be taken into account when storing user-submitted data in the database? 
+ * What Validation and sanitization steps are necessary to only submit text not numbers or special characters? 
  */
 function wpqc_store_input(string $input)
 {
@@ -139,6 +143,10 @@ add_action('wp_ajax_wpqc_get_last_five_entries', 'wpqc_get_last_five_entries');
  * Helper function to get the last five entries from the database.
  * Return the last five entries as an array (no output).
  * Useful for reuse and for debugging (var_dump).
+ * Technical question: What are the benefits of separating database query logic into its own function?
+ * How does this improve code maintainability and testability?
+ * What is alternative ways to prepare SQL statements in WordPress besides $wpdb->prepare()? 
+ * What is the benefits of using of using array_map function instead of a foreach loop here?    
  *
  * @return array
  */
