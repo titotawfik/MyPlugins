@@ -6,7 +6,7 @@
  * Plugin Name:     wp-quickcheck
  * Plugin Slug:     wp-quickcheck
  * Text Domain:     wp-quickcheck
- * Description:     Quickcheck Plugin Test
+ * Description:     Quickcheck Plugin for WordPress
  * Version:         0.1.0  
  * Author:          Tito Bakr
  * License:         GPL v3 or later
@@ -36,9 +36,9 @@ add_action('plugins_loaded', function () {
 });
 
 /** 
- * Create a shortcode [qc_form] that outputs a form with:
- * Techical question: What happen you adding the shorcode 10 times on the same page? Highlight any potential issues and suggest improvements.
- * What Require once can do here to optimize performance? 
+ * Create a shortcode [qc_form] that outputs a form with a single text input and a submit button.
+ * When the form is submitted, it should use AJAX to send the input value to a custom AJAX endpoint.
+ * The shortcode should also load any necessary JavaScript and CSS assets for the form and AJAX functionality
  */
 function wpqc_form_shortcode($att, $content = null, $tag = '')
 {
@@ -87,13 +87,15 @@ register_activation_hook(__FILE__, 'wpqc_create_table');
 /** 
  *  Store the submitted text into a custom table (details below) using a secure SQL statement. 
  * @param string $input The input text to store
- * Technical question: What security considerations should be taken into account when storing user-submitted data in the database? 
- * What Validation and sanitization steps are necessary to only submit text not numbers or special characters? 
  */
 function wpqc_store_input(string $input)
 {
     global $wpdb;
     $table_name = $wpdb->prefix . 'wpqc_inputs';
+    // Validation submit text not numbers or special characters? 
+    $input = preg_replace('/[^a-zA-Z\s]/', '', $input);
+    // Sanitize the input to prevent SQL injection and other security issues
+    $input = sanitize_text_field($input);
 
     $wpdb->insert(
         $table_name,
@@ -153,12 +155,7 @@ add_action('wp_ajax_wpqc_get_last_five_entries', 'wpqc_get_last_five_entries');
 /**
  * Helper function to get the last five entries from the database.
  * Return the last five entries as an array (no output).
- * Useful for reuse and for debugging (var_dump).
- * Technical question: What are the benefits of separating database query logic into its own function?
- * How does this improve code maintainability and testability?
- * What is alternative ways to prepare SQL statements in WordPress besides $wpdb->prepare()? 
- * What is the benefits of using of using array_map function instead of a foreach loop here?    
- *
+ * Useful for reuse and for debugging (var_dump).   
  * @return array
  */
 function wpqc_get_last_five_entries_array()

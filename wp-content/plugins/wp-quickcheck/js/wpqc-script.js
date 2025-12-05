@@ -9,13 +9,12 @@
 */
 
 jQuery(document).ready(function ($) {
-
-  // Support multiple instances by using data attributes
   const $forms = $(".qc-form");
-  
+
   $forms.each(function (index) {
     const $currentForm = $(this);
     const instance = index + 1;
+    // Support multiple instances by using data attributes
     $currentForm.data("instance", instance);
     const minChars = 3;
     const $submitButton = $currentForm.find(".qc_submit-btn");
