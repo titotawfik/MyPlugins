@@ -40,13 +40,24 @@ add_action('plugins_loaded', function () {
  * Techical question: What happen you adding the shorcode 10 times on the same page? Highlight any potential issues and suggest improvements.
  * What Require once can do here to optimize performance? 
  */
-function wpqc_form_shortcode()
+function wpqc_form_shortcode($att, $content = null, $tag = '')
 {
+    static $instance = 0;
+    $instance++;
     //Load plugin assests only if shorcode is used
-    require_once WPQC_PLUGIN_ROOT . 'includes/wpqc-assets.php';
+    static $assets_loaded = false;
+    if (!$assets_loaded) {
+        require_once WPQC_PLUGIN_ROOT . 'includes/wpqc-assets.php';
+        wpqc_enqueue_assets();
+        $assets_loaded = true;
+    }
     //Load the shortcode template
-    require_once WPQC_PLUGIN_ROOT . 'templates/shortcode.php';
-    return wpqc_shortcode_template();
+    static $template_loaded = false;
+    if (!$template_loaded) {
+        require_once WPQC_PLUGIN_ROOT . 'templates/shortcode.php';
+        $template_loaded = true;
+    }
+    return wpqc_shortcode_template($instance);
 }
 add_shortcode('qc_form', 'wpqc_form_shortcode');
 
